@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+declare -r _FONT='DejaVu-Sans-Mono'
+
+_commands=(
+    "qrencode"
+    "convert"
+)
+
+err() {
+    printf '%s\n' "$*"
+}
+
+usage() {
+    err "usage: $0 <SSID> <KEY>"
+}
+
+checkcmd() {
+    if ! command -v "$1" >/dev/null ; then
+        err "Command \"$1\" not found."
+        exit 1
+    fi
+}
+
+checkcmds() {
+    for cmd in "${@}" ; do
+        checkcmd "${cmd}"
+    done
+}
+
+(( $# == 2 )) || { usage ; exit 1 ; }
+
+checkcmds "${_commands[@]}"
+
+qrencode \
+    --output - \
+    --type SVG \
+    --size 20 \
+    --margin 1 \
+    "WIFI:S:${1};T:WPA2;P:${2});;" | \
+convert \
+    - \
+    \( \
+    -pointsize 32 \
+    -gravity west \
+    -font "${_FONT}" \
+    label:"SSID: ${1}\nKEY:  ${2}" \
+    -bordercolor 'white' \
+    -border 20x15 \
+    \) \
+    -append \
+    png:-
